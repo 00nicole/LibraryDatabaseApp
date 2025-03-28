@@ -41,7 +41,7 @@ def donateItem():
 
         if currentQuantity: 
             cursor.execute("UPDATE Item SET quantity = ? WHERE title = ? AND type = ? AND publicationYear = ? AND authorName = ? AND publisherName = ? AND genre = ?",
-            (currentQuantity[0] + 1, itemTitle, publicationYear, itemType, authorName, publisherName, genre))
+            (currentQuantity[0] + 1, itemTitle, itemType, publicationYear, authorName, publisherName, genre))
         
         else:
             cursor.execute("INSERT INTO Item (title, type, publicationYear, authorName, publisherName, status, quantity, genre) VALUES (?, ?, ?, ?, ?, 'Available', 1, ?)",
