@@ -1,17 +1,114 @@
 import sqlite3
+import datetime
 
 conn = sqlite3.connect("library.db")
 cursor = conn.cursor()
 conn.commit()
 
 def findItem():
-    print("implement me please")
+    title = input("\nPlease enter the title of the item: ").strip()
+    with conn:
+        cursor.execute("SELECT * FROM Item WHERE title LIKE ?", ('%' + title + '%',))
+        items = cursor.fetchall()
+        
+        if items:
+            print("\nFound", len(items), "matching result(s):")
+            for index, item in enumerate(items, start=1):
+                print(str(index) + ". " + item[2] + ": " + item[1] + " by " + item[4] + " | Genre: " + item[8] + " | Status: " + item[6])
 
-def borrowItem():
-    print("implement me please")
+            while True:
+                try:
+                    selection = int(input("\nEnter the corresponding number to select an item: ").strip())
+                    if 1 <= selection <= len(items):
+                        item = items[selection - 1]
+                        print("\n--- Item Details ---")
+                        print("Title:", item[1])
+                        print("Type:", item[2])
+                        print("Publication Year:", item[3])
+                        print("Author:", item[4])
+                        print("Publisher:", item[5])
+                        print("Status:", item[6])
+                        print("Genre:", item[8])
+                        
+                        if item[6].lower() == "available":
+                            while True:
+                                borrows = input("\nWould you like to borrow this item? (yes/no): ").strip().lower()
+                                if borrows == "yes":
+                                    borrowItem(item[0])
+                                    break
+                                elif borrows == "no":
+                                    print("Returning to main menu.")
+                                    break
+                                else:
+                                    print("Invalid input. Please enter 'yes' or 'no'.")
+                        break
+                    else:
+                        print("Invalid selection. Please enter a valid number.")
+                except ValueError:
+                    print("Invalid input. Please enter a numerical value.")
+        else:
+            print("\nSorry, no items found that match your search.")
+   
+
+def borrowItem(itemID):
+    dueDate = (datetime.datetime.today() + datetime.timedelta(weeks=2)).strftime("%Y-%m-%d") 
+    with conn:
+        cursor.execute(
+            "SELECT * FROM Borrowing WHERE libraryCardNumberFK = ? AND itemID_FK = ? AND returnDate IS NOT NULL",(libraryCardNumber, itemID))
+        prevBorrowed = cursor.fetchone()
+
+        cursor.execute(
+            "UPDATE Item SET status = 'Borrowed' WHERE itemID = ?",(itemID,))
+        if prevBorrowed:
+             cursor.execute("UPDATE Borrowing SET dueDate = ?, returnDate = NULL, fine = 0 WHERE itemID_FK = ? AND libraryCardNumberFK = ?",(dueDate, itemID, libraryCardNumber))
+        else:
+            cursor.execute("INSERT INTO Borrowing (libraryCardNumberFK, itemID_FK, dueDate) VALUES (?, ?, ?)",(libraryCardNumber, itemID, dueDate))
+    
+    print(f"\nItem successfully borrowed! Please return the item by {dueDate}.")
+
+
 
 def returnItem():
-    print("implement me please")
+    with conn:
+        cursor.execute(
+            """SELECT b.itemID_FK, i.title, b.dueDate 
+               FROM Borrowing b JOIN Item i ON b.itemID_FK = i.itemID 
+               WHERE b.libraryCardNumberFK = ? AND b.returnDate IS NULL""",(libraryCardNumber,))
+        borrowedItems = cursor.fetchall()
+    if not borrowedItems:
+        print("\nYou have no borrowed items to return.")
+        return
+    
+    print("\nSelect an item to return:")
+    for idx, (itemID, title, dueDate) in enumerate(borrowedItems, start=1):
+        print(str(idx) + ". " + title + " (Due: " + dueDate + ")") 
+
+
+    while True:
+        try:
+            selection = int(input("\nEnter the corresponding number of the item you want to return: "))
+            if 1 <= selection <= len(borrowedItems):
+                break
+            else:
+                print("Invalid selection. Please enter a number from the list.")
+        except ValueError:
+            print("Invalid input. Please enter a numerical value.")
+
+    itemID, title, dueDate = borrowedItems[selection - 1]
+    returnDate = datetime.datetime.today()
+    dueDate = datetime.datetime.strptime(dueDate, "%Y-%m-%d")
+    fineAmt = max(0, (returnDate - dueDate).days)  
+
+    with conn:
+        cursor.execute("UPDATE Borrowing SET returnDate = ?, fine = ? WHERE itemID_FK = ? AND libraryCardNumberFK = ?",(returnDate.strftime("%Y-%m-%d"), fineAmt, itemID, libraryCardNumber))
+        cursor.execute("UPDATE Item SET status = 'Available' WHERE itemID = ?",(itemID,))
+
+    print(f"\n'{title}' has been successfully returned on {returnDate.strftime('%Y-%m-%d')}.")
+    if fineAmt > 0:
+        print(f"You have a fine of ${fineAmt} for the late return.")
+    else:
+        print("Thank you for returning on time!")
+
 
 def donateItem():
     itemTitle = input("\nPlease enter the title of the item: ")
@@ -56,8 +153,7 @@ def findEvent():
     print("6. Climate Change and Its Impact\n7. Future of Renewable Energy Innovations\n8. Space Science for Kids\n9. Tech Talks: The Future of Artificial Intelligence\n10. The Rise of Electric Vehicles\n")
     
     with conn:
-        cursor.execute("SELECT eventName, eventDate, recommendedAudience FROM Event WHERE eventID = ?",
-        (getSelection(),))
+        cursor.execute("SELECT eventName, eventDate, recommendedAudience FROM Event WHERE eventID = ?",(getSelection(),))
     
         eventInfo = cursor.fetchone()
         print("Event Name:", eventInfo[0] + "\nEvent Date:", eventInfo[1] + "\nRecommended Audience:", eventInfo[2])
@@ -122,22 +218,19 @@ def getSelection():
         except ValueError:
             print("Invalid input. Please enter a numerical value.\n")
 
-# note: we might not even need to do this intro sequence
-# we'll see once we do function implementation.
 
-# intro sequence to get users to select location, then userID
+
+
+# into sequence
 print("Welcome! Please select your library location:")
 print("1. Central Library\n2. Eastside Branch\n3. West End Library\n4. South Park Library\n5. Uptown Library")
 print("6. Downtown Library\n7. Northgate Branch\n8. Southside Library\n9. City Library\n10. Parkview Library\n")
 libs = ["Central Library", "Eastside Branch", "West End Library", "South Park Library", "Uptown Library", "Downtown Library", "Northgate Branch", "Southside Library", "City Library", "Parkview Library"]
 
-
 libLocation = libs[getSelection() - 1]
 
 print("You have selected the",libLocation +".")
 
-
-#Sign in using library card number
 print("Please Enter Your Library Card Number:")
 print("1. John Smith\n2. Emma Johnson\n3. Liam Williams\n4. Olivia Brown\n5. Noah Davis")
 print("6. Ava Miller\n7. William Wilson\n8. Sophia Moore\n9. James Anderson\n10. Charlotte Taylor\n")
@@ -146,41 +239,38 @@ names = ["John Smith", "Emma Johnson", "Liam Williams", "Olivia Brown", "Noah Da
 libraryCardNumber = getSelection()
 name = names[libraryCardNumber - 1]
 
-print("\nWelcome to the Library", name + "!")
+print("\nWelcome to the Library,", name + "!")
 
 
 def main():
     while True:
         print("\nTo make a selection, please enter the corresponding number")
-        print("1. Find an item")
-        print("2. Borrow an item") #should we merge with #1?
-        print("3. Return an item")
-        print("4. Donate an item")
-        print("5. Find an event")
-        print("6. Register for an event") #should we merge with number 5?
-        print("7. Volunteer")
-        print("8. Ask for help")
-        print("9. Exit")
+        print("1. Find or borrow an item")
+        print("2. Return an item")
+        print("3. Donate an item")
+        print("4. Find an event")
+        print("5. Register for an event") #should we merge with number 5?
+        print("6. Volunteer")
+        print("7. Ask for a recommendation")
+        print("8. Exit")
         
         selection = input("Enter your selection: ")
         
         if selection == "1":
             findItem()
         elif selection == "2":
-            borrowItem()
-        elif selection == "3":
             returnItem()
-        elif selection == "4":
+        elif selection == "3":
             donateItem()
-        elif selection == "5":
+        elif selection == "4":
             findEvent()
-        elif selection == "6":
+        elif selection == "5":
             registerForEvent()
-        elif selection == "7":
+        elif selection == "6":
             volunteer()
-        elif selection == "8":
+        elif selection == "7":
             askForHelp()
-        elif selection == "9":
+        elif selection == "8":
             print("Exiting...")
             break
         else:
