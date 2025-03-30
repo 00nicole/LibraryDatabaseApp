@@ -190,7 +190,59 @@ def registerForEvent():
          
 
 def volunteer():
-    print("implement me please")
+    with conn:
+        cursor.execute(
+            """SELECT v.libraryNameFK, v.addressFK 
+               FROM Volunteers v 
+               WHERE v.libraryCardNumberFK = ?""",(libraryCardNumber,))
+        volunteerAt = cursor.fetchall()
+
+    if volunteerAt:
+        print("\nYou are currently volunteering at the following library/libraries:")
+        for index, (libraryName, address) in enumerate(volunteerAt, start=1):
+            print(str(index) + ". " + libraryName + " ("+address+") ")
+    else:
+        print("\nYou are not currently volunteering at any libraries.")
+
+    with conn:
+        cursor.execute(
+            """SELECT libraryName, address 
+               FROM Library 
+               WHERE (libraryName, address) NOT IN (
+                   SELECT libraryNameFK, addressFK FROM Volunteers WHERE libraryCardNumberFK = ?
+               )""",(libraryCardNumber,))
+        availLibraries = cursor.fetchall()
+
+    if not availLibraries:
+        print("\nThere are no additional libraries available for volunteering.")
+        return
+
+    print("\nWould you like to volunteer at another library? Here are the available options:")
+    for index, (libraryName, address) in enumerate(availLibraries, start=1):
+        print(str(index) + ". " + libraryName + " ("+address+") ")
+
+    while True:
+        try:
+            selection = input("\nPlease enter the corresponding number of the library that you would like to volunteer at (or 0 to cancel): ").strip()
+            if selection == "0":
+                print("\nReturning to menu...")
+                return
+
+            selection = int(selection)
+            if 1 <= selection <= len(availLibraries):
+                selected_library = availLibraries[selection - 1]
+                break
+            else:
+                print("Invalid selection. Please enter a valid number.")
+        except ValueError:
+            print("Invalid input. Please enter a numerical value.")
+    with conn:
+        cursor.execute(
+            """INSERT INTO Volunteers (libraryNameFK, addressFK, libraryCardNumberFK) 
+               VALUES (?, ?, ?)""",(selected_library[0], selected_library[1], libraryCardNumber))
+
+    print("\nYou are now a volunteer at " + selected_library[0], "("+ selected_library[1]+"). Thank you for your support!")
+
 
 def askForHelp():
     genre = input("State the genre you would like an item recommendation for (Action, Fantasy, Thriller, etc.): ")
@@ -249,7 +301,7 @@ def main():
         print("2. Return an item")
         print("3. Donate an item")
         print("4. Find an event")
-        print("5. Register for an event") #should we merge with number 5?
+        print("5. Register for an event") 
         print("6. Volunteer")
         print("7. Ask for a recommendation")
         print("8. Exit")
