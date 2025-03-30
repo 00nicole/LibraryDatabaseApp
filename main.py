@@ -234,7 +234,7 @@ def volunteer():
 
 
 def askForHelp():
-    genre = input("State the genre you would like an item recommendation for (Action, Fantasy, Thriller, etc.): ").lower()
+    genre = input("State the genre you would like an item recommendation for (Adventure, Fantasy, Science, etc.): ").lower()
 
     with conn:
         
