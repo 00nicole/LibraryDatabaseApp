@@ -14,7 +14,7 @@ def findItem():
         if items:
             print("\nFound", len(items), "matching result(s):")
             for index, item in enumerate(items, start=1):
-                print(str(index) + ". " + item[2] + ": " + item[1] + " by " + item[4] + " | Genre: " + item[8] + " | Status: " + item[6])
+                print(str(index) + ". " + item[2] + ": " + item[1] + " by " + item[4] + " | Genre: " + item[7].capitalize() + " | Status: " + item[6])
 
             while True:
                 try:
@@ -28,7 +28,7 @@ def findItem():
                         print("Author:", item[4])
                         print("Publisher:", item[5])
                         print("Status:", item[6])
-                        print("Genre:", item[8])
+                        print("Genre:", item[7].capitalize())
                         
                         if item[6].lower() == "available":
                             while True:
@@ -137,7 +137,7 @@ def donateItem():
 
 
 def findEvent():
-    print("Select the event you are looking for:")
+    print("\nSelect the event you are looking for:")
     print("1. Book Signing with George R.R. Martin\n2. AI and the Future of Work\n3. Space Exploration Talk\n4. National Geographic Documentary Screening\n5. Virtual Reality Gaming Expo")
     print("6. Climate Change and Its Impact\n7. Future of Renewable Energy Innovations\n8. Space Science for Kids\n9. Tech Talks: The Future of Artificial Intelligence\n10. The Rise of Electric Vehicles\n")
     
@@ -149,7 +149,7 @@ def findEvent():
 
 
 def registerForEvent():
-    print("Select the event you would like to register for:")
+    print("\nSelect the event you would like to register for:")
     print("1. Book Signing with George R.R. Martin\n2. AI and the Future of Work\n3. Space Exploration Talk\n4. National Geographic Documentary Screening\n5. Virtual Reality Gaming Expo")
     print("6. Climate Change and Its Impact\n7. Future of Renewable Energy Innovations\n8. Space Science for Kids\n9. Tech Talks: The Future of Artificial Intelligence\n10. The Rise of Electric Vehicles\n")
    
