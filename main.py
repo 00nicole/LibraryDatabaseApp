@@ -129,19 +129,8 @@ def donateItem():
     genre = input("\nPlease enter the genre of the item: ")
 
     with conn:
-        #If the item already exists in the library, get the current quantity of this item, and increment it by 1
-        cursor.execute(
-            "SELECT quantity FROM Item WHERE title = ? AND type = ? AND publicationYear = ? AND authorName = ? AND publisherName = ? AND genre = ?",
-            (itemTitle, itemType, publicationYear, authorName, publisherName, genre))
-        
-        currentQuantity = cursor.fetchone()
-
-        if currentQuantity: 
-            cursor.execute("UPDATE Item SET quantity = ? WHERE title = ? AND type = ? AND publicationYear = ? AND authorName = ? AND publisherName = ? AND genre = ?",
-            (currentQuantity[0] + 1, itemTitle, itemType, publicationYear, authorName, publisherName, genre))
-        
-        else:
-            cursor.execute("INSERT INTO Item (title, type, publicationYear, authorName, publisherName, status, quantity, genre) VALUES (?, ?, ?, ?, ?, 'Available', 1, ?)",
+       
+            cursor.execute("INSERT INTO Item (title, type, publicationYear, authorName, publisherName, status, genre) VALUES (?, ?, ?, ?, ?, 'Available', ?)",
             (itemTitle, itemType, publicationYear, authorName, publisherName, genre))
         
     print("\nThank you for your donation of", itemTitle + " by", authorName + "!")
