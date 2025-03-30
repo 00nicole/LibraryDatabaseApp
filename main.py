@@ -245,12 +245,11 @@ def volunteer():
 
 
 def askForHelp():
-    genre = input("State the genre you would like an item recommendation for (Action, Fantasy, Thriller, etc.): ")
+    genre = input("State the genre you would like an item recommendation for (Action, Fantasy, Thriller, etc.): ").lower()
 
     with conn:
         
-        cursor.execute("SELECT * FROM Item WHERE genre = ? LIMIT 1",
-        (genre,))
+        cursor.execute("SELECT * FROM Item WHERE genre LIKE ?", ('%' + genre + '%',))
 
         itemRecommendation = cursor.fetchone()
 
